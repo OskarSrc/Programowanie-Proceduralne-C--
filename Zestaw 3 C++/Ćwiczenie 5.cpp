@@ -10,115 +10,136 @@
 #include <iostream>
 using namespace std;
 
-// WĘZEŁ KOLEJKI — identyczny jak w liście i stosie
+// =============================================
+// WĘZEŁ KOLEJKI — podstawowy "klocek" (Nasz pojedynczy klient)
+// Każdy klient trzyma:
+//   dane     — numerek klienta (np. pobrany z biletomatu)
+//   nastepny — adres osoby, która stoi bezpośrednio ZA NIM w kolejce
+// =============================================
 struct Node {
     int dane;
-    Node* nastepny;
+    Node* nastepny; 
 };
 
-// Kolejka w pamięci wygląda tak:
-// poczatek → [10|ptr] → [20|ptr] → [30|nullptr] ← koniec
-//             wychodzi pierwszy        wchodzi ostatni
-//
-// FIFO — First In, First Out
-// Kolejka jak w sklepie: kto przyszedł pierwszy, wychodzi pierwszy
+// =============================================
+// WIZUALIZACJA KOLEJKI W PAMIĘCI (Zasada FIFO: First In, First Out)
+// 
+// [KASA]
+// poczatek → [10 | ptr] → [20 | ptr] → [30 | nullptr] ← koniec
+//            wychodzi        stoi        wchodzi
+//            pierwszy       w środku     ostatni
+// =============================================
+
 
 // =============================================
-// PUSH — dodaj element NA KONIEC kolejki
-// Nowy element zawsze ląduje z tyłu
+// PUSH — Dodawanie klienta NA SAM KONIEC kolejki
+// Używamy ampersandów (&), żeby fizycznie zmieniać oryginały wskaźników w main()
 // =============================================
 void push(Node*& poczatek, Node*& koniec, int wartosc) {
+    
+    // 1. Otwieramy drzwi sklepu i wchodzi nowy klient (tworzymy węzeł).
+    // Nowy klient staje na końcu, więc nie ma NIKOGO za sobą (dlatego nullptr).
+    Node* nowy = new Node{wartosc, nullptr};
 
-    Node* nowy = new Node;
-    nowy->dane = wartosc;
-    nowy->nastepny = nullptr; // Nowy węzeł będzie ostatni — nic za nim
-
-    // Przypadek szczególny: kolejka jest pusta
-    // Nowy węzeł jest jednocześnie początkiem i końcem
+    // 2. Co jeśli sklep był całkowicie pusty?
     if (koniec == nullptr) {
+        // Nowy klient ma luksus. Jest jednocześnie pierwszym (przy kasie) 
+        // i ostatnim (na końcu). Oba wskaźniki pokazują na niego.
         poczatek = nowy;
-        koniec = nowy;
-        return;
+        koniec = nowy; 
+    } 
+    // 3. Co jeśli w kolejce już ktoś stoi?
+    else {
+        // Klient, który do tej pory był na końcu (koniec), musi zauważyć, 
+        // że ktoś za nim stanął. Dajemy mu do ręki wskaźnik na nowego klienta.
+        koniec->nastepny = nowy; 
+        
+        // Teraz oficjalnie przesuwamy tabliczkę "KONIEC KOLEJKI" na tego nowego klienta.
+        koniec = nowy;           
     }
-
-    // Podczepiamy nowy węzeł za dotychczasowym końcem
-    koniec->nastepny = nowy;
-
-    // Nowy węzeł staje się nowym końcem
-    koniec = nowy;
 }
 
+
 // =============================================
-// POP — usuń element Z POCZĄTKU kolejki
-// Zawsze wychodzimy od przodu — jak w kolejce w sklepie
+// POP — Obsługa klienta (wychodzi z POCZĄTKU kolejki, od kasy)
+// Zawsze obsługujemy tego, kto ma wskaźnik 'poczatek'
 // =============================================
 void pop(Node*& poczatek, Node*& koniec) {
+    
+    // 1. Zabezpieczenie: Kasjerka nie może nikogo obsłużyć, jeśli sklep jest pusty!
+    if (poczatek == nullptr) return; 
 
-    // Nie można nic zabrać z pustej kolejki
-    if (poczatek == nullptr) {
-        cout << "Kolejka pusta!\n";
-        return;
-    }
-
-    Node* temp = poczatek;          // Zapamiętujemy aktualny początek
-    poczatek = poczatek->nastepny;  // Początek przesuwa się na następny węzeł
-
-    // Jeśli po usunięciu kolejka jest pusta — koniec też ustawiamy na nullptr
+    // 2. Łapiemy klienta, który właśnie stoi przy kasie (żeby go potem usunąć z pamięci).
+    Node* temp = poczatek;         
+    
+    // 3. Kasa woła "Następny proszę!". 
+    // Zmieniamy wskaźnik 'poczatek' na osobę, która stała tuż za obsłużonym klientem.
+    poczatek = poczatek->nastepny; 
+    
+    // 4. BARDZO WAŻNY WARUNEK: A co, jeśli to był OSTATNI klient w sklepie?
+    // Jeśli po jego wyjściu początek stał się pusty (nullptr), to znaczy, 
+    // że wskaźnik 'koniec' też musi zostać wyzerowany (zamykamy kolejkę).
     if (poczatek == nullptr) {
         koniec = nullptr;
     }
-
-    delete temp; // Usuwamy stary początek z pamięci
+    
+    // 5. Fizycznie wyrzucamy obsłużonego klienta ze sklepu (z pamięci komputera).
+    // Zapobiega to słynnym wyciekom pamięci.
+    delete temp; 
 }
 
+
 // =============================================
-// WYŚWIETL — pokaż wszystkie elementy od początku do końca
+// WYŚWIETL — Kasjerka rozgląda się po kolejce od początku do końca
+// UWAGA: Tutaj NIE MA ampersanda! Node* poczatek, a nie Node*& poczatek.
+// Dzięki temu kasjerka tylko patrzy (pracuje na kopii wzroku), 
+// a nie przesuwa fizycznie ludzi w kolejce.
 // =============================================
 void wyswietl(Node* poczatek) {
-    if (poczatek == nullptr) {
-        cout << "Kolejka pusta!\n";
-        return;
+    // Dopóki wzrok kasjerki nie trafi na pustkę (nullptr)...
+    while (poczatek != nullptr) {
+        cout << poczatek->dane << " -> "; // ...wykrzycz numerek klienta
+        poczatek = poczatek->nastepny;    // ...i przenieś wzrok na osobę za nim
     }
-
-    Node* temp = poczatek;
-    while (temp != nullptr) {
-        cout << temp->dane << " -> ";
-        temp = temp->nastepny;
-    }
-    cout << "NULL\n";
+    cout << "NULL\n"; // Koniec kolejki
 }
 
+
 // =============================================
-// ZWOLNIJ — usuń wszystkie węzły z pamięci
+// ZWOLNIJ — Zamykamy sklep, wyganiamy wszystkich z kolejki
+// Zwalnianie całej pamięci na koniec działania programu
 // =============================================
 void zwolnij(Node*& poczatek, Node*& koniec) {
+    // Genialny manewr: nie musimy pisać od nowa usuwania. 
+    // Po prostu wywołujemy naszą funkcję pop() tak długo, aż nikogo nie będzie.
     while (poczatek != nullptr) {
-        Node* temp = poczatek;
-        poczatek = poczatek->nastepny;
-        delete temp;
+        pop(poczatek, koniec);
     }
-    koniec = nullptr; // Koniec też zerujemy — kolejka oficjalnie pusta
 }
 
+
+// =============================================
+// MAIN — GŁÓWNY PROGRAM
+// =============================================
 int main() {
-    Node* poczatek = nullptr; // Pusty początek
-    Node* koniec = nullptr;   // Pusty koniec
+    Node* poczatek = nullptr; // Otwieramy sklep: początek kolejki jest pusty
+    Node* koniec = nullptr;   // Koniec kolejki również jest pusty
 
-    // Dodajemy elementy — każdy ląduje NA KOŃCU
-    push(poczatek, koniec, 10); // Kolejka: 10
-    push(poczatek, koniec, 20); // Kolejka: 10 -> 20
-    push(poczatek, koniec, 30); // Kolejka: 10 -> 20 -> 30
+    // Wpuszczamy klientów (każdy staje karnie na końcu)
+    push(poczatek, koniec, 10); // Wchodzi pan 10
+    push(poczatek, koniec, 20); // Pan 20 staje za panem 10
+    push(poczatek, koniec, 30); // Pan 30 staje za panem 20
 
-    cout << "Kolejka: ";
-    wyswietl(poczatek); // 10 -> 20 -> 30 -> NULL
+    cout << "Kolejka w sklepie: ";
+    wyswietl(poczatek); // Wyświetli: 10 -> 20 -> 30 -> NULL
 
-    // Pop usuwa z POCZĄTKU — wychodzi 10, nie 30
-    pop(poczatek, koniec);
-    cout << "Po pop: ";
-    wyswietl(poczatek); // 20 -> 30 -> NULL
+    // Obsługujemy pierwszego klienta przy kasie (pana 10)
+    pop(poczatek, koniec); 
+    
+    cout << "Po obsluzeniu pierwszego klienta: ";
+    wyswietl(poczatek); // Wyświetli: 20 -> 30 -> NULL
 
-    // Zwalniamy całą pamięć
-    zwolnij(poczatek, koniec);
-
+    // Zamykamy sklep, wyrzucamy resztę ludzi do zera
+    zwolnij(poczatek, koniec); 
     return 0;
 }
