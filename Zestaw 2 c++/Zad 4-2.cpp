@@ -1,90 +1,88 @@
-// Zadanie 4.2: Zapis i odczyt z pliku z większą ilością danych
-// Rozszerz program z zadania 4.1 tak, aby obsługiwał duże pliki z danymi (np. 1 milion liczb).
-// Program powinien działać wydajnie, zarządzać pamięcią i sortować dane w sposób optymalny.
 #include <iostream>
 #include <fstream>
-#include <ctime>
 #include <cstdlib>
+#include <chrono> // NOWOŚĆ: Nowoczesna, precyzyjna biblioteka czasu (od C++11)
 using namespace std;
 
-// Tablica globalna na 1 000 000 elementów
-// MUSI być globalna — taka ilość danych na stosie (w main) spowodowałaby crash
-// Stos ma zwykle ~1-8 MB, a samo int[1000000] to już 4 MB
+// ==========================================
+// PUNKT ZAPALNY NR 1: ZMIENNA GLOBALNA
+// ==========================================
+// Prowadzący: "Dlaczego ta tablica na milion elementów jest wyciągnięta przed maina?"
+// Twoja Tarcza: "Gdybym zadeklarował tablicę int tab[1000000] wewnątrz funkcji main, 
+// trafiłaby ona na STOS (stack). Stos systemowy ma zazwyczaj tylko od 1 do 8 MB. 
+// Milion intów to równe 4 Megabajty, więc program prawie na pewno by się wysypał 
+// z błędem Stack Overflow. Wyciągając ją globalnie, umieszczam ją w sekcji danych (BSS), 
+// która jest limitowana tylko ilością fizycznego RAM-u w komputerze."
 int tab[1000000];
 
-// =============================================
-// QUICK SORT — identyczny jak w 4.1
-// Przy milionie elementów O(n log n) to ~20 milionów operacji
-// Bubble Sort zrobiłby to samo w ~1 bilion operacji — różnica jest ogromna
-// =============================================
+// Funkcja Quick Sort (wersja z pivotem na środku)
 void quickSort(int lewy, int prawy) {
-    if (lewy >= prawy) return; // Zakres 1-elementowy — już posortowany
-
-    int srodek = tab[(lewy + prawy) / 2]; // Pivot ze środka
+    if (lewy >= prawy) return;
+    int srodek = tab[(lewy + prawy) / 2];
     int i = lewy, j = prawy;
 
     while (i <= j) {
-        while (tab[i] < srodek) i++; // Szukamy za dużego od lewej
-        while (tab[j] > srodek) j--; // Szukamy za małego od prawej
+        while (tab[i] < srodek) i++;
+        while (tab[j] > srodek) j--;
         if (i <= j) {
-            swap(tab[i], tab[j]); // Zamieniamy — każdy na właściwą stronę
+            swap(tab[i], tab[j]);
             i++; j--;
         }
     }
 
-    quickSort(lewy, j);  // Sortuj lewą część
-    quickSort(i, prawy); // Sortuj prawą część
+    quickSort(lewy, j);
+    quickSort(i, prawy);
 }
 
 int main() {
-    srand(time(0));
-
-    // =============================================
-    // KROK 1: Generowanie pliku z milionem liczb
-    // Robimy to programowo — ręczne wpisanie miliona liczb byłoby niemożliwe
-    // =============================================
-    cout << "Generuje 1 000 000 liczb do pliku milion.txt... (chwileczke)\n";
-
+    // KROK 1: Generowanie pliku (sztuczne dane do testów)
+    cout << "Generuje 1 000 000 liczb do pliku milion.txt...\n";
     ofstream generator("milion.txt");
     for (int j = 0; j < 1000000; j++) {
-        generator << rand() % 1000000 << "\n"; // Losowe liczby 0-999999
+        generator << rand() % 1000000 << "\n";
     }
     generator.close();
 
-    // =============================================
-    // KROK 2: Odczyt z pliku do tablicy
-    // Wczytujemy liczby jedna po drugiej — pętla kończy się automatycznie
-    // gdy operator >> napotka koniec pliku
-    // =============================================
+    // KROK 2: Odczyt z pliku do globalnej tablicy
     cout << "Wczytuje z pliku...\n";
-
-    int n = 0; // Licznik wczytanych elementów
+    int n = 0;
     ifstream wejscie("milion.txt");
-    while (wejscie >> tab[n]) {
+    
+    // Zabezpieczenie: czytamy, dopóki jest co, ALE nie więcej niż milion (rozmiar tablicy)
+    while (n < 1000000 && wejscie >> tab[n]) {
         n++;
     }
     wejscie.close();
 
     cout << "Wczytano: " << n << " liczb\n";
 
-    // =============================================
-    // KROK 3: Sortowanie
-    // Mierzymy tylko czas sortowania — bez I/O, żeby wynik był czysty
-    // =============================================
+    // ==========================================
+    // PUNKT ZAPALNY NR 2: DLACZEGO CHRONO?
+    // ==========================================
+    // Prowadzący: "Czemu użył Pan chrono, a nie funkcji clock()?"
+    // Twoja Tarcza: "Biblioteka <chrono> to nowoczesny standard C++. Stara funkcja clock() 
+    // mierzy tzw. takty procesora, które mogą być bardzo niedokładne przez to, 
+    // że dzisiejsze procesory dynamicznie zmieniają taktowanie (np. Turbo Boost). 
+    // Zegar high_resolution_clock z chrono daje mi precyzję co do nanosekundy, 
+    // całkowicie niezależną od wahań taktowania CPU."
     cout << "Sortuje " << n << " liczb (Quick Sort)...\n";
 
-    clock_t start = clock();
+    // Zapisujemy czas startu używając słówka "auto", żeby kompilator sam domyślił się typu
+    auto start = chrono::high_resolution_clock::now();
+
     quickSort(0, n - 1);
-    double czas = (double)(clock() - start) / CLOCKS_PER_SEC;
 
-    cout << "Czas sortowania: " << czas << " s\n";
+    // Zapisujemy czas końca
+    auto koniec = chrono::high_resolution_clock::now();
+    
+    // Obliczamy różnicę i od razu konwertujemy ją na wygodne sekundy w typie double
+    chrono::duration<double> czas = koniec - start;
 
-    // =============================================
-    // KROK 4: Zapis posortowanych danych z powrotem do pliku
-    // ofstream nadpisuje plik automatycznie — czyści go przed zapisem
-    // =============================================
+    // Metoda .count() wyciąga samą wartość liczbową z obiektu czasu
+    cout << "Czas sortowania: " << czas.count() << " sekund\n";
+
+    // KROK 4: Nadpisanie pliku posortowanymi danymi
     cout << "Zapisuje posortowane liczby z powrotem do pliku...\n";
-
     ofstream wyjscie("milion.txt");
     for (int j = 0; j < n; j++) {
         wyjscie << tab[j] << "\n";
