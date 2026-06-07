@@ -2,81 +2,74 @@
 // Stwórz dynamiczną tablicę, która przechowuje liczby całkowite.
 // Rozmiar tablicy może rosnąć w razie potrzeby — gdy tablica osiągnie pełną pojemność,
 // należy zaalokować większy blok pamięci, skopiować dane i zwolnić poprzedni.
-
 #include <iostream>
 using namespace std;
 
 // =============================================
-// STRUKTURA — trzyma wszystko co potrzebne do zarządzania tablicą
-//   dane      — wskaźnik na aktualny blok pamięci
-//   rozmiar   — ile elementów aktualnie przechowujemy
-//   pojemnosc — ile elementów MOŻEMY przechować zanim trzeba rozszerzyć
+// STRUKTURA TABLICY — Wyobraź sobie, że to Twój regał na książki
 // =============================================
 struct Tablica {
-    int* dane;
-    int rozmiar;
-    int pojemnosc;
+    int* dane;     // Wskaźnik (adres) na to, gdzie fizycznie stoi Twój regał
+    int rozmiar;   // Ile książek FAKTYCZNIE na nim teraz leży
+    int pojemnosc; // Ile książek MAKSYMALNIE wejdzie, zanim regał pęknie
 };
 
 // =============================================
-// INICJALIZACJA — tworzymy pustą tablicę z początkową pojemnością
+// INICJALIZACJA — Kupujemy pierwszy, mały regał
+// Używamy ampersanda (&), żeby modyfikować oryginał z main()
 // =============================================
 void inicjalizuj(Tablica& t, int pojemnoscPoczatkowa = 4) {
-    t.dane = new int[pojemnoscPoczatkowa]; // Alokujemy pierwszy blok
-    t.rozmiar = 0;                         // Na razie nic nie przechowujemy
-    t.pojemnosc = pojemnoscPoczatkowa;     // Możemy wpisać 4 elementy zanim rozszerzymy
+    t.dane = new int[pojemnoscPoczatkowa]; // Alokujemy w pamięci nowy regał na 4 miejsca
+    t.rozmiar = 0;                         // Na razie nie ma na nim ani jednej książki
+    t.pojemnosc = pojemnoscPoczatkowa;     // Zapisujemy w dokumentach, że mieści 4
 }
 
 // =============================================
-// ROZSZERZ — podwaja pojemność tablicy gdy jest pełna
-// To jest serce całego ćwiczenia
+// ROZSZERZ — Najważniejsza funkcja! (Regał jest pełny)
+// W C++ nie da się magicznie rozciągnąć tablicy w pamięci.
+// Musimy kupić nowy regał, przenieść rzeczy i wyrzucić stary.
 // =============================================
 void rozszerz(Tablica& t) {
+    // 1. Zawsze PODWAJAMY rozmiar (żeby nie biegać do sklepu po nowy regał co jedną książkę)
+    int nowaPojemnosc = t.pojemnosc * 2; 
 
-    // Nowa pojemność = dwukrotność poprzedniej
-    // Podwajanie jest standardową strategią — nie rozszerzamy o 1,
-    // bo wtedy przy każdym dodaniu musielibyśmy kopiować całą tablicę
-    int nowaPojemnosc = t.pojemnosc * 2;
+    // 2. Kupujemy nowy, 2x większy regał
+    int* noweDane = new int[nowaPojemnosc]; 
 
-    // Alokujemy NOWY, większy blok pamięci
-    int* noweDane = new int[nowaPojemnosc];
-
-    // Kopiujemy wszystkie elementy ze starego bloku do nowego
+    // 3. Mozolnie, sztuka po sztuce, przenosimy książki ze starego regału na nowy
     for (int i = 0; i < t.rozmiar; i++) {
-        noweDane[i] = t.dane[i];
+        noweDane[i] = t.dane[i]; 
     }
 
-    // Zwalniamy STARY blok — już go nie potrzebujemy
-    delete[] t.dane;
-
-    // Podmieniamy wskaźnik i aktualizujemy pojemność
-    t.dane = noweDane;
-    t.pojemnosc = nowaPojemnosc;
-
-    cout << "Rozszerzono pojemnosc do: " << nowaPojemnosc << "\n";
+    // 4. Rąbiemy stary, mały regał na drewno (BARDZO WAŻNE: zwalniamy starą pamięć!)
+    delete[] t.dane; 
+    
+    // 5. Od teraz oficjalnie "nasz główny regał" to ten nowy, duży
+    t.dane = noweDane;           
+    t.pojemnosc = nowaPojemnosc; // Aktualizujemy papiery o nowej pojemności
 }
 
 // =============================================
-// DODAJ — wstawia element na koniec tablicy
-// Jeśli tablica pełna — najpierw rozszerza
+// DODAJ — Wkładanie nowej książki (elementu) na koniec
 // =============================================
 void dodaj(Tablica& t, int wartosc) {
-
-    // Czy tablica jest pełna? Jeśli tak — rozszerzamy przed dodaniem
+    // Przed włożeniem książki patrzymy, czy regał nie jest pełny
     if (t.rozmiar == t.pojemnosc) {
-        rozszerz(t);
+        rozszerz(t); // Jeśli pełny, wołamy naszą funkcję, która kupi większy regał
     }
-
-    // Wpisujemy wartość na pierwsze wolne miejsce
-    t.dane[t.rozmiar] = wartosc;
-    t.rozmiar++;
+    
+    // Kładziemy nową wartość na pierwsze wolne miejsce (indeks to zawsze aktualny rozmiar)
+    t.dane[t.rozmiar] = wartosc; 
+    
+    // Zaznaczamy, że mamy o jedną książkę więcej
+    t.rozmiar++;                 
 }
 
 // =============================================
-// WYSWIETL — pokazuje wszystkie elementy i aktualny stan tablicy
+// WYŚWIETL — Wypisanie wszystkiego na ekran (bez & bo tylko patrzymy)
 // =============================================
 void wyswietl(const Tablica& t) {
-    cout << "Elementy (" << t.rozmiar << "/" << t.pojemnosc << "): ";
+    cout << "Stan (" << t.rozmiar << "/" << t.pojemnosc << "): ";
     for (int i = 0; i < t.rozmiar; i++) {
         cout << t.dane[i] << " ";
     }
@@ -84,28 +77,27 @@ void wyswietl(const Tablica& t) {
 }
 
 // =============================================
-// ZWOLNIJ — zwalnia pamięć po zakończeniu pracy
+// ZWOLNIJ — Likwidacja pokoju (zwalniamy pamięć przed zamknięciem)
 // =============================================
 void zwolnij(Tablica& t) {
-    delete[] t.dane;
+    delete[] t.dane; // Niszczymy nasz ostatni regał (obojętnie jak bardzo był rozszerzony)
     t.dane = nullptr;
     t.rozmiar = 0;
     t.pojemnosc = 0;
 }
 
 int main() {
-
     Tablica t;
-    inicjalizuj(t, 4); // Startujemy z pojemnością 4
+    inicjalizuj(t, 4); // Startujemy skromnie, z pojemnością 4
 
-    // Dodajemy 8 elementów — tablica rozszerzy się automatycznie po 4. i 8. elemencie
-    for (int i = 1; i <= 8; i++) {
-        cout << "Dodaje: " << i * 10 << "\n";
-        dodaj(t, i * 10);
-        wyswietl(t);
+    // Próbujemy wcisnąć 9 elementów. 
+    // Tablica "pęknie" i sama rozszerzy się dwa razy w tle (przy 5 i 9 elemencie)!
+    for (int i = 1; i <= 9; i++) {
+        dodaj(t, i * 10); 
+        wyswietl(t); // Zobaczysz na ekranie, jak rośnie pojemność
     }
 
-    zwolnij(t); // Zwalniamy pamięć przed końcem programu
+    zwolnij(t); // Zawsze po sobie sprzątamy
 
     return 0;
 }
