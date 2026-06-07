@@ -1,111 +1,46 @@
-// Ćwiczenie 4: Stos dynamiczny
-// Stwórz dynamiczną strukturę danych reprezentującą stos.
-// Implementacja stosu powinna zawierać operacje:
-//   push  — dodaj element na szczyt stosu
-//   pop   — zdejmij element ze szczytu
-//   top   — podejrzyj szczyt bez zdejmowania
-//   isEmpty — sprawdź czy stos jest pusty
-
 #include <iostream>
 using namespace std;
 
-// WĘZEŁ STOSU — identyczny jak w liście jednokierunkowej
-// Stos to tak naprawdę lista, na której operujemy tylko od jednego końca (szczytu)
+// Struktura pojedynczego elementu (wyobraź sobie, że to jeden talerz na stosie)
 struct Node {
-    int dane;
-    Node* nastepny; // Wskazuje na węzeł pod spodem
+    int dane;       // Trzyma konkretną liczbę
+    Node* nastepny; // Trzyma adres do talerza pod spodem
 };
 
-// Stos w pamięci wygląda tak (30 jest na szczycie):
-// szczyt → [30|ptr] → [20|ptr] → [10|nullptr]
-//           góra                   dół stosu
-
-// =============================================
-// PUSH — dodaj element na szczyt
-// Działa dokładnie jak "dodaj na początek" w liście
-// Nowy element zawsze ląduje na górze
-// =============================================
+// PUSH: Kładzenie nowego talerza na samą górę
 void push(Node*& szczyt, int wartosc) {
-    Node* nowy = new Node;
-    nowy->dane = wartosc;
-
-    // Nowy węzeł wskazuje na dotychczasowy szczyt
-    // (wkładamy go "na wierzch" stosu)
-    nowy->nastepny = szczyt;
-
-    // Nowy węzeł staje się nowym szczytem
-    szczyt = nowy;
+    // "Myk" z klamerkami: to nowy standard C++. Tworzy węzeł i od razu 
+    // przypisuje mu 'wartosc' oraz podpina go do aktualnego 'szczytu'.
+    // Na koniec nowo stworzony węzeł staje się oficjalnie nowym szczytem.
+    szczyt = new Node{wartosc, szczyt}; 
 }
 
-// =============================================
-// POP — zdejmij element ze szczytu
-// Usuwa tylko JEDEN węzeł — ten na samej górze
-// =============================================
+// POP: Zdejmowanie jednego talerza z góry
 void pop(Node*& szczyt) {
-
-    // Nie można zdjąć nic z pustego stosu
-    if (szczyt == nullptr) {
-        cout << "Stos pusty!\n";
-        return;
-    }
-
-    Node* temp = szczyt;        // Zapamiętujemy aktualny szczyt
-    szczyt = szczyt->nastepny;  // Szczyt przesuwa się na węzeł pod spodem
-    delete temp;                // Usuwamy stary szczyt z pamięci
+    if (szczyt == nullptr) return; // Zabezpieczenie: jeśli nie ma talerzy, nic nie rób
+    
+    Node* temp = szczyt;       // 1. Łapiemy górny talerz w zmienną pomocniczą
+    szczyt = szczyt->nastepny; // 2. Szczytem staje się teraz talerz poziom niżej
+    delete temp;               // 3. Fizycznie niszczymy ten stary, górny talerz
 }
 
-// =============================================
-// TOP — podejrzyj szczyt BEZ zdejmowania
-// Zwraca wartość, ale węzeł zostaje na stosie
-// =============================================
+// TOP: Tylko zerkamy na górny talerz (bez jego usuwania)
 int top(Node* szczyt) {
-    if (szczyt == nullptr) {
-        cout << "Stos pusty!\n";
-        return -1; // Wartość sygnalizująca błąd
-    }
-    return szczyt->dane;
+    // Używamy tzw. operatora trójargumentowego (warunek ? prawda : fałsz)
+    // Jeśli szczyt istnieje (!= nullptr), zwróć jego dane. Jeśli nie, zwróć -1 (jako błąd).
+    return (szczyt != nullptr) ? szczyt->dane : -1; 
 }
 
-// =============================================
-// ISEMPTY — sprawdź czy stos jest pusty
-// Stos jest pusty gdy szczyt wskazuje na nullptr
-// =============================================
+// ISEMPTY: Sprawdzenie, czy stos jest pusty
 bool isEmpty(Node* szczyt) {
-    return szczyt == nullptr;
+    return szczyt == nullptr; // Zwróci true (1), jeśli szczyt to NULL
 }
 
-// =============================================
-// ZWOLNIJ — usuń wszystkie węzły ze stosu
-// Działa jak pop w pętli — zdejmuje po jednym aż do pustego
-// =============================================
+// ZWOLNIJ: Sprzątanie pamięci na sam koniec działania programu
 void zwolnij(Node*& szczyt) {
+    // Genialny myk: dopóki stos nie jest pusty, po prostu wywołujemy naszą 
+    // funkcję pop(), która po kolei zdejmuje talerze i czyści pamięć.
     while (szczyt != nullptr) {
-        Node* temp = szczyt;
-        szczyt = szczyt->nastepny;
-        delete temp;
+        pop(szczyt); 
     }
-}
-
-int main() {
-    Node* szczyt = nullptr; // Pusty stos — szczyt wskazuje na nullptr
-
-    // Dodajemy trzy elementy — każdy ląduje NA WIERZCHU
-    push(szczyt, 10); // Stos: 10
-    push(szczyt, 20); // Stos: 20 -> 10
-    push(szczyt, 30); // Stos: 30 -> 20 -> 10
-
-    // top() nie zdejmuje — tylko podgląda
-    cout << "Szczyt: " << top(szczyt) << "\n"; // 30
-
-    // pop() zdejmuje jeden element z góry
-    pop(szczyt);
-    cout << "Po pop, szczyt: " << top(szczyt) << "\n"; // 20
-
-    // isEmpty zwraca 0 (false) bo stos ma jeszcze elementy
-    cout << "Czy pusty: " << isEmpty(szczyt) << "\n"; // 0 = nie
-
-    // Zwalniamy całą pozostałą pamięć przed końcem programu
-    zwolnij(szczyt);
-
-    return 0;
 }
