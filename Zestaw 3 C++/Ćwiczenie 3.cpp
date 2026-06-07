@@ -1,3 +1,21 @@
+// ============================================================================
+// Ćwiczenie 3: Lista jednokierunkowa
+// ============================================================================
+// Opis: Stwórz dynamiczną listę jednokierunkową, która pozwala na dodawanie 
+// nowych elementów na początku i na końcu listy.
+//
+// Zadanie:
+// 1. Utwórz strukturę dla pojedynczego elementu listy (zawierającego dane 
+//    i wskaźnik na następny element).
+// 2. Dodaj funkcje do:
+//    - Dodawania elementu na początek listy.
+//    - Dodawania elementu na koniec listy.
+//    - Wyświetlania listy.
+// 3. Po zakończeniu programu zwolnij pamięć, usuwając wszystkie elementy listy.
+//
+// Wskazówka: Użyj wskaźników do dynamicznego alokowania pamięci dla nowych elementów.
+// ============================================================================
+
 #include <iostream>
 using namespace std;
 
