@@ -1,3 +1,20 @@
+// ============================================================================
+// Ćwiczenie 4: Stos dynamiczny
+// ============================================================================
+// Opis: Stwórz dynamiczną strukturę danych reprezentującą stos. Implementacja 
+// stosu powinna zawierać operacje: push, pop, top, oraz isEmpty.
+//
+// Zadanie:
+// 1. Utwórz strukturę dla elementu stosu i wskaźnik na początek stosu.
+// 2. Implementuj funkcje do:
+//    - Dodawania elementu na stos (push).
+//    - Usuwania elementu ze stosu (pop).
+//    - Pobierania szczytu stosu (top).
+//    - Sprawdzania, czy stos jest pusty (isEmpty).
+// 3. Po zakończeniu pracy ze stosem, zwolnij pamięć.
+//
+// Wskazówka: Wykorzystaj wskaźniki do reprezentacji stosu.
+// ============================================================================
 #include <iostream>
 using namespace std;
 
