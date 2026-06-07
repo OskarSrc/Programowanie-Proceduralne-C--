@@ -1,44 +1,43 @@
 #include <iostream>
-#include <iomanip>  // setw() — wyrównanie liczb przy wyświetlaniu
-#include <cstdlib>  // rand(), srand()
-#include <ctime>    // time() — ziarno dla generatora losowego
 using namespace std;
 
-const int N = 20; // Liczebność zbioru — zmień tutaj żeby testować inne rozmiary
-
 int main() {
-    int d[N]; // Tablica do sortowania
-    int i, j; // Liczniki pętli — styl klasyczny, zadeklarowane na górze
+    // 1. Przygotowujemy dane do posortowania
+    int tablica[] = { 45, 12, 89, 33, 7 };
+    int rozmiar = 5; // Mamy 5 liczb w tablicy
 
-    srand((unsigned)time(NULL)); // Inicjalizujemy generator losowy aktualnym czasem
-                                 // Bez tego rand() daje te same liczby przy każdym uruchomieniu
+    // 2. Wypisanie stanu początkowego (żeby udowodnić, że kod działa)
+    cout << "Przed sortowaniem: ";
+    for (int i = 0; i < rozmiar; i++)
+        cout << tablica[i] << " ";
+    cout << "\n";
 
-    // Wypełniamy tablicę losowymi liczbami z zakresu 0-99
-    for (i = 0; i < N; i++) d[i] = rand() % 100;
+    // ==========================================
+    // 3. GŁÓWNY ALGORYTM: ZOPTYMALIZOWANE SORTOWANIE BĄBELKOWE
+    // ==========================================
+    
+    // Zewnętrzna pętla: Liczy, ile razy musimy "przejść" przez całą tablicę.
+    // Zawsze potrzebujemy o jedno przejście mniej niż jest elementów (rozmiar - 1).
+    for (int przejscie = 0; przejscie < rozmiar - 1; przejscie++)
+        
+        // Wewnętrzna pętla: Odpowiada za porównywanie konkretnych sąsiadów.
+        // Optymalizacja (- przejscie): Po każdym pełnym cyklu, największa liczba 
+        // ląduje bezpiecznie na samym końcu. Nie ma sensu sprawdzać tego końca drugi raz!
+        for (int indeks = 0; indeks < rozmiar - 1 - przejscie; indeks++)
+            
+            // Jeśli liczba po lewej stronie jest większa od tej po prawej...
+            if (tablica[indeks] > tablica[indeks + 1])
+                
+                // ...to zamieniamy je miejscami (większy "bąbelek" wędruje w prawo)
+                swap(tablica[indeks], tablica[indeks + 1]);
 
-    // Wyświetlamy tablicę przed sortowaniem
-    // setw(4) — każda liczba zajmuje 4 znaki, żeby kolumny były równe
-    cout << "Przed sortowaniem:\n";
-    for (i = 0; i < N; i++) cout << setw(4) << d[i];
-    cout << endl;
+    // ==========================================
 
-    // Sortowanie bąbelkowe — wersja podstawowa (bez optymalizacji)
-    // Zewnętrzna pętla j: ile razy "przelatujemy" przez tablicę (N-1 razy)
-    // Wewnętrzna pętla i: porównujemy sąsiednie pary d[i] i d[i+1]
-    // Jeśli lewa > prawa — zamieniamy miejscami
-    // Po każdym przejściu największy nieposortowany element "wypływa" na koniec
-    for (j = 0; j < N - 1; j++) {
-        for (i = 0; i < N - 1; i++) {
-            if (d[i] > d[i + 1]) {
-                swap(d[i], d[i + 1]);
-            }
-        }
-    }
-
-    // Wyświetlamy tablicę po sortowaniu
-    cout << "Po sortowaniu:\n";
-    for (i = 0; i < N; i++) cout << setw(4) << d[i];
-    cout << endl;
+    // 4. Wypisanie gotowego, posortowanego wyniku
+    cout << "Po sortowaniu:     ";
+    for (int i = 0; i < rozmiar; i++)
+        cout << tablica[i] << " ";
+    cout << "\n";
 
     return 0;
 }
